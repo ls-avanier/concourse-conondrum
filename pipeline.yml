@@ -1,0 +1,126 @@
+resources:
+- name: repo-a
+  type: git
+  source:
+    uri: git@github.com:ls-avanier/test_repo_a.git
+    branch: master
+    private_key: {{repo_a_deploy_key}}
+- name: repo-b
+  type: git
+  source:
+    uri: git@github.com:ls-avanier/test_repo_b.git
+    branch: master
+    private_key: {{repo_b_deploy_key}}
+- name: repo-c
+  type: git
+  source:
+    uri: git@github.com:ls-avanier/test_repo_c.git
+    branch: master
+    private_key: {{repo_c_deploy_key}}
+
+jobs:
+- name: job-1
+  plan:
+  - aggregate:
+    - get: repo-a
+      trigger: true
+    - get: repo-b
+      trigger: true
+  - task: read-revisions
+    config:
+      inputs:
+      - name: repo-a
+      - name: repo-b
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: { repository: busybox }
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          set +xev
+          cat repo-a/file.txt
+          cat repo-b/file.txt
+- name: job-2
+  plan:
+  - aggregate:
+    - get: repo-a
+      trigger: true
+      passed: [job-1]
+    - get: repo-b
+      trigger: true
+      passed: [job-1]
+  - task: read-revisions
+    config:
+      inputs:
+      - name: repo-a
+      - name: repo-b
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: { repository: busybox }
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          set +xev
+          cat repo-a/file.txt
+          cat repo-b/file.txt
+- name: job-3
+  plan:
+  - aggregate:
+    - get: repo-a
+      trigger: true
+    - get: repo-c
+      trigger: true
+  - task: read-revisions
+    config:
+      inputs:
+      - name: repo-a
+      - name: repo-c
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: { repository: busybox }
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          set +xev
+          cat repo-a/file.txt
+          cat repo-c/file.txt
+- name: job-4
+  plan:
+  - aggregate:
+    - get: repo-a
+      trigger: true
+      passed: [job-2, job-3]
+    - get: repo-b
+      trigger: true
+      passed: [job-2]
+    - get: repo-c
+      trigger: true
+      passed: [job-3]
+  - task: read-revisions
+    config:
+      inputs:
+      - name: repo-a
+      - name: repo-b
+      - name: repo-c
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: { repository: busybox }
+      run:
+        path: sh
+        args:
+        - -exc
+        - |
+          set +xev
+          cat repo-a/file.txt
+          cat repo-b/file.txt
+          cat repo-c/file.txt

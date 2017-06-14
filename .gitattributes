@@ -1,1 +1,3 @@
 **/*secret* filter=git-crypt diff=git-crypt
+**/*ed25519* filter=git-crypt diff=git-crypt
+**/*.rsa* filter=git-crypt diff=git-crypt
